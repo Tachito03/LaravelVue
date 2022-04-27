@@ -1,0 +1,136 @@
+name: CI CD workflow
+ 
+on:
+  push:
+    branches: ['*']
+  pull_request: 
+    branches: [master]
+     
+ 
+jobs:
+ tests-laravel:
+   runs-on: ubuntu-latest
+   strategy:
+     matrix:
+       php: [8.0.0]
+ 
+   name: Prueba - PHP ${{ matrix.php }}
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v2
+ 
+     - name: Cache PHP dependencies
+       uses: actions/cache@v1
+       with:
+         path: vendor
+         key: dependencies-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+ 
+     - name: Setup PHP
+       uses: shivammathur/setup-php@v2
+       with:
+         php-version: ${{ matrix.php }}
+         extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd
+         coverage: none
+ 
+     - name: Copy ENV Laravel Configuration for CI
+       run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+ 
+     - name: Install dependencies
+       run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+     
+     - name: Npm Install
+       run: npm install
+
+     - name: Npm produ
+       run: npm run prod
+
+     - name: Generate key
+       run: php artisan key:generate
+ 
+     - name: Execute php tests
+       run: vendor/bin/phpunit --verbose
+ 
+ deploy-development:
+   runs-on: ubuntu-latest
+   needs: tests-laravel
+   if: github.ref == 'refs/heads/dev'
+   #if: github.event_name != 'pull_request'
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v2
+ 
+     - name: Cache PHP dependencies
+       uses: actions/cache@v1
+       with:
+         path: vendor
+         key: dependencies-php-composer-${{ hashFiles('**/composer.lock') }}
+ 
+     - name: Setup PHP
+       uses: shivammathur/setup-php@v2
+       with:
+         php-version: 8.0
+         extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql, gd, json, intl
+         coverage: none 
+ 
+     - name: Install dependencies
+       run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+ 
+     - name: Copy dotenv file
+       run: php -r "file_put_contents(__DIR__ . '/.env', '${{ secrets.DOT_ENV }}');"
+
+     - name: Generate Key
+       run: php artisan key:generate
+ 
+     - name: Deploy-development
+       uses: appleboy/scp-action@master
+       env:
+         HOST: ${{ secrets.SSH_HOST }}
+         KEY: ${{ secrets.SSH_KEY }}
+         USERNAME: ${{ secrets.SSH_USERNAME }}         
+       with: 
+         source: "."
+         target: "/var/www/dev"
+         strip_components: 1
+
+ deploy-production:
+   runs-on: ubuntu-latest
+   needs: [tests-laravel]
+   #if: github.event_name == 'pull_request'
+   if: github.ref == 'refs/heads/master'
+   steps:
+     - name: Checkout code
+       uses: actions/checkout@v2
+ 
+     - name: Cache PHP dependencies
+       uses: actions/cache@v1
+       with:
+         path: vendor
+         key: dependencies-php-composer-${{ hashFiles('**/composer.lock') }}
+ 
+     - name: Setup PHP
+       uses: shivammathur/setup-php@v2
+       with:
+         php-version: 8.0
+         extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pdo_mysql, gd, json, intl
+         coverage: none 
+ 
+     - name: Install dependencies
+       run: composer install --no-ansi --no-interaction --no-scripts --no-suggest --no-progress --prefer-dist
+
+     - name: Copy dotenv file
+       run: php -r "file_put_contents(__DIR__ . '/.env', '${{ secrets.DOT_ENV }}');"
+
+     - name: Generate Key
+       run: php artisan key:generate
+ 
+     - name: Deploy-prod
+       uses: appleboy/scp-action@master
+       env:
+         HOST: ${{ secrets.SSH_HOST }}
+         KEY: ${{ secrets.SSH_KEY }}
+         USERNAME: ${{ secrets.SSH_USERNAME }}         
+       with: 
+         source: "."
+         target: "/var/www/dev"
+         strip_components: 1
+        
