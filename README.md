@@ -69,6 +69,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 - Ir al directorio principal del servidor local</p>
   <p>Clona este proyecto</p>
+  <p>https://github.com/Tachito03/LaravelVue.git</p>
 
 - Entrar a la carpeta del proyecto
 
