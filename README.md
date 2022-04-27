@@ -64,3 +64,25 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+##Instrucciones
+
+- Ir al directorio principal del servidor local</p>
+  <p>Clona este proyecto</p>
+
+- Entrar a la carpeta del proyecto
+- 
+- Ejecutar los siguientes comando
+    composer dump-autoload
+    
+  <p>Para actualizar las dependencias</p>
+  
+   php artisan key:generate
+   
+    <p>Genera una nueva clave para laravel</p>
+    
+   npm run watch
+   <p>Para que genere nuevos Mixes para vue, despues de completado al 100% puede detenerlo con ctrl + ^c</p>
+   
+   php artisan serve
+   <p>Para activar el servidor e ingrese en el navegador 127.0.0.1:8000 o el ip que aparece al ejecutar el comando</p>
